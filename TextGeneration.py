@@ -55,7 +55,8 @@ def openVideoFile(fileToOpen):
 		cv2.waitKey(int(1/fps*500)) # time to wait between frames, in mSec
 		ret, frame = vidFile.read() # read next frame, get next return code
 		timestmp = vidFile.get(cv2.cv.CV_CAP_PROP_POS_MSEC) / 1000
-		print(timestmp)
+		print("{0:.2f} seconds\r").format(timestmp),
+		sys.stdout.flush()
 
 
 
