@@ -1,48 +1,33 @@
 import sys #arguments
 import os #filesys
-import youtube_dl
-
-class MyLogger(object):
-	def debug(self, msg):
-		pass
-
-	def warning(self, msg):
-		pass
-
-	def error(self, msg):
-		print(msg)
-
-
-def my_hook(d):
-	if d['total_bytes']:
-		print '{0:2.2f}%\r'.format(float(d['downloaded_bytes'])/float(d['total_bytes'])*100),
-		sys.stdout.flush()
-	if d['status'] == 'finished':
-		print('Done downloading, now converting ...')
+import subprocess#shell calls
+import TextGeneration as TG
 
 def getVideoURL(fullurl):
 	return "https://www.youtube.com/watch?v=pk6zdlZVVlU"
 	#return "2dBY7kRIu6E"
-
 def downloadVideoFile(pathtofolder, videoID):
 	if not os.path.exists(pathtofolder):
 		os.mkdir(pathtofolder)
-	ydl_opts = {
-		'format': 'best',
-		'outtmpl': pathtofolder + '%(title)s.%(ext)s',
-		'logger': MyLogger(),
-		'progress_hooks': [my_hook],
-		'FileDownloader': ['continuedl'],
-	}
-	print (pathtofolder)
-	with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-		ydl.download([getVideoURL('asfdasdfa')])
+
+	flags = "--write-srt --srt-lang en "+videoID+" -f \"best[height=720]\" --output '"+pathtofolder+"/%(title)s.%(ext)s'"
+
+	proc = subprocess.Popen(["youtube-dl "+flags, ], stderr=subprocess.PIPE, shell=True)
+	(err) = proc.communicate()
+
+	if("video doesn't have subtitles" in err ):
+		#^
+		print("Video Doesn't Have Subtitles")
+	else:
+		print("")
+	return
 
 def main():
 	Args = sys.argv;
 
 	videoID = getVideoURL(sys.argv[0])	
 	downloadVideoFile("video/", videoID)
+	TG.openVideoFile("video/Call of Duty - Advanced Warfare Multiplayer Gameplay.mp4")
 	return;
 
 
