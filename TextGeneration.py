@@ -10,38 +10,28 @@ def getROI(img):
 	x2 = (int)(width//4)
 	y1 = (int)(height//2 + height//6)
 	y2 = (int)(3* height//4 + height//11)
+
 	cv2.rectangle(img, (x1, y1), (x2, y2), (255,0,0), 2)
-	getText(img, (x1, y1), (x2,y2))
-	return img
+	return getText(img, (x1, y1), (x2,y2))
 
 #place img2 onto img1 at loc p1.x, p1.y
-def compImage(img1, img2, p1):
-	img1[p1[0]:p1[0]+img2.shape[0], p1[1]:p1[1]+img2.shape[1]] = img2
+def compImage(img1, img2, p1, p2):
+	img1[p2[0] + (p2[1]//4):p2[1], p1[0]:p1[1] - (p1[1]//3)]= img2
 	return img1
 
 def getText(img, p1, p2):
-	crop_img = img[p1[0]:p1[1], p2[0]:p2[1]]
+	crop_img = img[p2[0] + (p2[1]//4):p2[1], p1[0]:p1[1] - (p1[1]//3)]
 
-	gray = cv2.cvtColor(crop_img,cv2.COLOR_BGR2GRAY)
-	blur = cv2.GaussianBlur(gray,(5,5),0)
-	thresh = cv2.adaptiveThreshold(blur,255,1,1,11,2)
+	hsv = cv2.cvtColor(crop_img, cv2.COLOR_BGR2HSV)
 
-	contours,hierarchy = cv2.findContours(thresh,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+	# define range of blue color in HSV
+	lower_col = np.array([110,50,50], dtype=np.uint8)
+	upper_col = np.array([130,255,255], dtype=np.uint8)
 
-	samples =  np.empty((0,100))
-	responses = []
-	keys = [i for i in range(48,58)]
+	mask = cv2.inRange(hsv, lower_col, upper_col)
+	res = cv2.bitwise_and(crop_img,crop_img, mask= mask)
 
-	for cnt in contours:
-		if cv2.contourArea(cnt)>50:
-			[x,y,w,h] = cv2.boundingRect(cnt)
-
-			if  h>28:
-				cv2.rectangle(crop_img,(x,y),(x+w,y+h),(0,0,255),2)
-				roi = thresh[y:y+h,x:x+w]
-				roismall = cv2.resize(roi,(10,10))
-
-	return compImage(img, crop_img, p1)
+	return res #compImage(img, res, p1, p2)
 
 def openVideoFile(fileToOpen):
 	try:
@@ -57,8 +47,17 @@ def openVideoFile(fileToOpen):
 	fps = vidFile.get(cv2.cv.CV_CAP_PROP_FPS)
 	print "FPS value: %s" %fps
 
+   	#vidFile.set(CV_CAP_PROP_POS_FRAMES, ); //Set index to last frame
+
 	ret, frame = vidFile.read() # read first frame, and the return code of the function.
 	while ret:  # note that we don't have to use frame number here, we could read from a live written file.
 		cv2.imshow("frameWindow", getROI(frame))
-		cv2.waitKey(int(1/fps*1000)) # time to wait between frames, in mSec
+		cv2.waitKey(int(1/fps*500)) # time to wait between frames, in mSec
 		ret, frame = vidFile.read() # read next frame, get next return code
+		timestmp = vidFile.get(cv2.cv.CV_CAP_PROP_POS_MSEC) / 1000
+		print(timestmp)
+
+
+
+
+
